@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 설계 문서 & 회의 내용
+    url: https://github.com/
+    about: 기능 구현 이슈가 아니라 설계 논의나 회의 안건은 별도로 정리하세요.

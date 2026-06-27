@@ -1,0 +1,127 @@
+name: 상위 작업 (Epic)
+description: 여러 하위 이슈를 묶는 큰 기능 단위입니다.
+title: "[EPIC] "
+labels: ["type: epic"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Epic 이슈입니다.
+        여러 작은 기능 이슈를 묶어 진행 상황을 관리할 때 사용합니다.
+
+        예:
+        [EPIC] 위임 계약 생성 플로우 구현
+        [EPIC] AI 경계 확인 요청 UX 구현
+        [EPIC] 계약 관리 대시보드 구현
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: 목표
+      description: 이 Epic이 완료되면 어떤 흐름이 가능해야 하나요?
+      placeholder: |
+        예:
+        운영자가 AI에게 위임할 작업 범위를 설정하고 저장할 수 있으며,
+        AI가 경계에 도달했을 때 운영자에게 확인을 요청하는 전체 흐름이 동작해야 합니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: 포함 범위
+      description: 이 Epic에 포함되는 기능을 적어주세요.
+      placeholder: |
+        - 위임 범위 설정 UI
+        - 허용/차단 작업 유형 선택
+        - 경계 도달 시 확인 요청 플로우
+        - 계약 저장 및 불러오기
+    validations:
+      required: true
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: 제외 범위
+      description: 이번 Epic에서 하지 않을 일을 적어주세요.
+      placeholder: |
+        - 멀티 운영자 권한 관리
+        - 계약 버전 히스토리
+        - 외부 시스템 연동
+    validations:
+      required: false
+
+  - type: textarea
+    id: sub-tasks
+    attributes:
+      label: 하위 작업
+      description: 작은 이슈를 만들기 전에는 텍스트로 적고, 만든 뒤에는 이슈 번호로 바꿔주세요.
+      placeholder: |
+        - [ ] [FEAT] 위임 범위 설정 UI 구현
+        - [ ] [FEAT] 경계 확인 요청 플로우 구현
+        - [ ] [FEAT] 계약 저장 API 연동
+
+        작은 이슈 생성 후:
+        - [ ] #1
+        - [ ] #2
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 완료 조건
+      description: 이 Epic이 끝났다고 판단할 기준을 적어주세요.
+      placeholder: |
+        - [ ] 하위 작업 이슈가 모두 완료되었다.
+        - [ ] 핵심 사용자 흐름이 브라우저에서 직접 확인되었다.
+        - [ ] 관련 PR이 main 브랜치에 병합되었다.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 우선순위
+      options:
+        - p0
+        - p1
+        - p2
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 대표 영역
+      options:
+        - frontend
+        - backend
+        - agent
+        - auth
+        - infra
+    validations:
+      required: false
+
+  - type: textarea
+    id: risk
+    attributes:
+      label: 예상 리스크
+      description: 막힐 수 있는 부분이나 먼저 결정해야 하는 내용을 적어주세요.
+      placeholder: |
+        - 위임 범위 강제 방식 결정 필요 (API 레벨 vs 미들웨어 레벨)
+        - 경계 트리거 이벤트 설계 방향 결정 필요
+    validations:
+      required: false
+
+  - type: textarea
+    id: references
+    attributes:
+      label: 참고 자료
+      description: 관련 문서, 목업, 회의 내용이 있으면 적어주세요.
+      placeholder: |
+        - Figma:
+        - 설계 문서:
+        - 관련 회의 메모:
+    validations:
+      required: false

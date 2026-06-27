@@ -1,0 +1,98 @@
+name: 기술 검증 Spike
+description: 구현 전에 기술 가능성이나 방향을 검증할 때 사용합니다.
+title: "[SPIKE] "
+labels: ["type: spike"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Spike는 기능 구현이 아니라 기술 검증/조사 작업입니다.
+        결과물은 코드 완성이 아니라 "결정 근거"입니다.
+        예: Claude API tool_use로 위임 범위를 강제할 수 있는지 확인, 경계 트리거 방식 비교
+
+  - type: textarea
+    id: question
+    attributes:
+      label: 검증 질문
+      description: 무엇을 확인하려는 작업인가요?
+      placeholder: "예: Claude API의 tool_use 스키마로 AI 허용 작업 유형을 제한할 수 있는가?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reason
+    attributes:
+      label: 검증이 필요한 이유
+      description: 왜 바로 구현하지 않고 먼저 검증해야 하나요?
+      placeholder: "예: 위임 범위 강제 방식에 따라 백엔드 아키텍처가 달라지기 때문에 먼저 확인이 필요합니다."
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: 검증 범위
+      description: 어디까지 확인하면 충분한지 적어주세요.
+      placeholder: |
+        - Claude API tool_use 스키마 구조 파악
+        - 허용 도구만 노출했을 때 AI 동작 확인
+        - 경계 초과 시 응답 형태 확인
+    validations:
+      required: true
+
+  - type: textarea
+    id: done
+    attributes:
+      label: 완료 조건
+      description: Spike가 끝났다고 판단할 기준을 적어주세요.
+      placeholder: |
+        - [ ] 검증 결과를 댓글 또는 문서로 정리했다.
+        - [ ] 가능/불가능 여부를 판단했다.
+        - [ ] 선택 가능한 대안을 적었다.
+        - [ ] 다음 작업 이슈를 제안했다.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 우선순위
+      options:
+        - p0
+        - p1
+        - p2
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 관련 영역
+      options:
+        - frontend
+        - backend
+        - agent
+        - auth
+        - infra
+    validations:
+      required: true
+
+  - type: input
+    id: timebox
+    attributes:
+      label: 제한 시간
+      description: Spike는 오래 끌면 안 됩니다. 검증에 쓸 시간을 정하세요.
+      placeholder: "예: 2시간, 하루, 이번 주 금요일까지"
+    validations:
+      required: true
+
+  - type: textarea
+    id: result-format
+    attributes:
+      label: 결과 정리 방식
+      description: 검증 결과를 어디에 남길지 적어주세요.
+      placeholder: |
+        예:
+        - 이슈 댓글에 결과 정리
+        - docs/decisions/ADR-001-delegation-enforcement.md에 반영
+        - 다음 구현 이슈 생성
