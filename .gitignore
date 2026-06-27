@@ -1,0 +1,10 @@
+# Claude
+CLAUDE.md
+.claude/
+AGENTS.md
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.env
