@@ -69,6 +69,7 @@ def _build_tool_declarations(allowed_tools: list[str]) -> list[types.Tool]:
                 type=types.Type.OBJECT,
                 properties={
                     "tool_name": types.Schema(type=types.Type.STRING, description="실행하려는 툴 이름"),
+                    "tool_args": types.Schema(type=types.Type.STRING, description="툴에 전달하려는 인자 (JSON 문자열)"),
                     "reason": types.Schema(type=types.Type.STRING, description="확인이 필요한 이유"),
                 },
                 required=["tool_name", "reason"],
@@ -107,7 +108,7 @@ async def run_agent(
             f"허용되지 않은 작업이 필요하면 반드시 request_confirmation을 호출해야 한다."
         )
 
-        response = client.models.generate_content(
+        response = await client.aio.models.generate_content(
             model="gemini-2.5-flash",
             contents=user_message,
             config=types.GenerateContentConfig(
@@ -148,7 +149,7 @@ async def run_agent(
         await queue.put(None)
 
     except Exception as e:
-        _sessions[session_id].status = "completed"
+        _sessions[session_id].status = "failed"
         _sessions[session_id].result = f"오류가 발생했다: {str(e)}"
         await queue.put(None)
 
