@@ -118,7 +118,7 @@ async def run_agent(
     allowed_tools: list[str],
 ) -> None:
     """Gemini 에이전트를 실행하고 세션 상태를 업데이트한다."""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     queue = _event_queues[session_id]
 
     try:
