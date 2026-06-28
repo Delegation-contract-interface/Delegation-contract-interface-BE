@@ -80,6 +80,19 @@ def _build_tool_declarations(allowed_tools: list[str]) -> list[types.Tool]:
     return [types.Tool(function_declarations=declarations)]
 
 
+def init_session(session_id: str, contract_id: str) -> SessionResponse:
+    """세션과 이벤트 큐를 사전 초기화하고 SessionResponse를 반환한다."""
+    session = SessionResponse(
+        session_id=session_id,
+        contract_id=contract_id,
+        status="running",
+        created_at=datetime.now(timezone.utc),
+    )
+    _sessions[session_id] = session
+    _event_queues[session_id] = asyncio.Queue()
+    return session
+
+
 async def run_agent(
     session_id: str,
     contract_id: str,
@@ -88,15 +101,7 @@ async def run_agent(
 ) -> None:
     """Gemini 에이전트를 실행하고 세션 상태를 업데이트한다."""
     loop = asyncio.get_event_loop()
-    queue = asyncio.Queue()
-    _event_queues[session_id] = queue
-
-    _sessions[session_id] = SessionResponse(
-        session_id=session_id,
-        contract_id=contract_id,
-        status="running",
-        created_at=datetime.now(timezone.utc),
-    )
+    queue = _event_queues[session_id]
 
     try:
         client = get_genai_client()

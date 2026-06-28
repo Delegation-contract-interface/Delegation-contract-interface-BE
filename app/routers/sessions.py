@@ -1,5 +1,6 @@
 import asyncio
 import json
+from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from app.models.session import SessionCreate, ConfirmRequest, SessionResponse
@@ -16,6 +17,7 @@ async def create_session(body: SessionCreate, background_tasks: BackgroundTasks)
         raise HTTPException(status_code=404, detail="계약을 찾을 수 없다.")
 
     session_id = agent_service.create_session_id()
+    session = agent_service.init_session(session_id, body.contract_id)
     background_tasks.add_task(
         agent_service.run_agent,
         session_id,
@@ -23,12 +25,7 @@ async def create_session(body: SessionCreate, background_tasks: BackgroundTasks)
         body.user_message,
         contract.allowed_tools,
     )
-    return SessionResponse(
-        session_id=session_id,
-        contract_id=body.contract_id,
-        status="running",
-        created_at=__import__("datetime").datetime.now(__import__("datetime").timezone.utc),
-    )
+    return session
 
 
 @router.get("/{session_id}/events")
