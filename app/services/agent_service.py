@@ -138,7 +138,10 @@ async def run_agent(
 
                     future: asyncio.Future = loop.create_future()
                     _confirm_futures[session_id] = future
-                    approved = await future
+                    try:
+                        approved = await future
+                    finally:
+                        _confirm_futures.pop(session_id, None)
 
                     if approved:
                         _sessions[session_id].status = "completed"
