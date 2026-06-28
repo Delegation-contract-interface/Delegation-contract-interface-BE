@@ -1,10 +1,11 @@
 import asyncio
 import json
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
 from fastapi.responses import StreamingResponse
 from app.models.session import SessionCreate, ConfirmRequest, SessionResponse
 from app.services import agent_service, contract_service
+from app.dependencies import require_operator_key
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
@@ -52,9 +53,9 @@ async def stream_events(session_id: str):
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
-@router.post("/{session_id}/confirm")
+@router.post("/{session_id}/confirm", dependencies=[Depends(require_operator_key)])
 def confirm_session(session_id: str, body: ConfirmRequest):
-    """운영자가 경계 초과 작업을 승인하거나 거절한다."""
+    """운영자가 경계 초과 작업을 승인하거나 거절한다. X-Operator-Key 헤더 필요."""
     ok = agent_service.resolve_confirmation(session_id, body.approved)
     if not ok:
         raise HTTPException(status_code=404, detail="확인 대기 중인 세션을 찾을 수 없다.")
