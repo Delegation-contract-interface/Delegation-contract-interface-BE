@@ -5,7 +5,7 @@ from app.routers import contracts, sessions
 
 app = FastAPI(title="Delegation Contract API")
 
-_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+_origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
