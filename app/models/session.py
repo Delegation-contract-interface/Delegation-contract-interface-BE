@@ -22,6 +22,6 @@ class ConfirmRequest(BaseModel):
 class SessionResponse(BaseModel):
     session_id: str
     contract_id: str
-    status: Literal["running", "waiting_confirmation", "completed", "rejected"]
+    status: Literal["running", "waiting_confirmation", "completed", "rejected", "failed"]
     result: Optional[str] = None
     created_at: datetime
