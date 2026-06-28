@@ -81,6 +81,23 @@ def _build_tool_declarations(allowed_tools: list[str]) -> list[types.Tool]:
     return [types.Tool(function_declarations=declarations)]
 
 
+def _execute_tool(tool_name: str, tool_input: str) -> str:
+    """허용된 툴을 시뮬레이션 실행하고 결과를 반환한다."""
+    simulated = {
+        "read_file": f"[시뮬레이션] '{tool_input}' 파일 내용을 읽었다.",
+        "write_file": f"[시뮬레이션] '{tool_input}' 파일에 내용을 저장했다.",
+        "list_files": "[시뮬레이션] 파일 목록: file1.txt, file2.txt, file3.txt",
+        "delete_file": f"[시뮬레이션] '{tool_input}' 파일을 삭제했다.",
+        "web_search": f"[시뮬레이션] '{tool_input}' 검색 결과: 관련 정보를 찾았다.",
+        "fetch_url": f"[시뮬레이션] '{tool_input}' URL의 내용을 가져왔다.",
+        "execute_code": f"[시뮬레이션] 코드를 실행했다. 출력: Hello from {tool_input}",
+        "query_database": f"[시뮬레이션] '{tool_input}' 쿼리 결과: 3개의 레코드를 찾았다.",
+        "update_database": f"[시뮬레이션] '{tool_input}' 쿼리로 레코드를 수정했다.",
+        "call_api": f"[시뮬레이션] '{tool_input}' API 호출 완료. 응답: 200 OK",
+    }
+    return simulated.get(tool_name, f"[시뮬레이션] {tool_name} 실행 완료.")
+
+
 def init_session(session_id: str, contract_id: str) -> SessionResponse:
     """세션과 이벤트 큐를 사전 초기화하고 SessionResponse를 반환한다."""
     session = SessionResponse(
@@ -114,25 +131,38 @@ async def run_agent(
             f"허용되지 않은 작업이 필요하면 반드시 request_confirmation을 호출해야 한다."
         )
 
-        response = await client.aio.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=user_message,
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
-                tools=tools,
-            ),
-        )
+        contents: list = [user_message]
 
-        candidate = response.candidates[0]
-        for part in candidate.content.parts:
-            if part.function_call:
+        while True:
+            response = await client.aio.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    tools=tools,
+                ),
+            )
+
+            candidate = response.candidates[0]
+            contents.append(candidate.content)
+
+            tool_responses = []
+            terminal = True
+
+            for part in candidate.content.parts:
+                if not part.function_call:
+                    continue
+
+                terminal = False
                 fn = part.function_call
+
                 if fn.name == "request_confirmation":
                     raw_tool_args = fn.args.get("tool_args", {})
                     if isinstance(raw_tool_args, str):
                         raw_tool_args = json.loads(raw_tool_args) if raw_tool_args else {}
                     if not isinstance(raw_tool_args, dict):
                         raw_tool_args = {}
+
                     event = ConfirmationEvent(
                         session_id=session_id,
                         tool_name=fn.args.get("tool_name", "unknown"),
@@ -149,18 +179,36 @@ async def run_agent(
                     finally:
                         _confirm_futures.pop(session_id, None)
 
-                    if approved:
-                        _sessions[session_id].status = "completed"
-                        _sessions[session_id].result = "운영자가 승인했다. 작업을 계속 진행한다."
-                    else:
+                    if not approved:
                         _sessions[session_id].status = "rejected"
                         _sessions[session_id].result = "운영자가 거절했다. 작업을 중단한다."
-                    await queue.put(None)
-                    return
+                        await queue.put(None)
+                        return
 
-        _sessions[session_id].status = "completed"
-        _sessions[session_id].result = candidate.content.parts[0].text if candidate.content.parts else ""
-        await queue.put(None)
+                    tool_responses.append(
+                        types.Part.from_function_response(
+                            name=fn.name,
+                            response={"result": "운영자가 승인했다. 작업을 진행한다."},
+                        )
+                    )
+                else:
+                    tool_input = fn.args.get("input", "")
+                    result = _execute_tool(fn.name, tool_input)
+                    tool_responses.append(
+                        types.Part.from_function_response(
+                            name=fn.name,
+                            response={"result": result},
+                        )
+                    )
+
+            if terminal:
+                text_parts = [p.text for p in candidate.content.parts if hasattr(p, "text") and p.text]
+                _sessions[session_id].status = "completed"
+                _sessions[session_id].result = "\n".join(text_parts) if text_parts else "완료됐다."
+                await queue.put(None)
+                return
+
+            contents.append(types.Content(role="user", parts=tool_responses))
 
     except Exception as e:
         _sessions[session_id].status = "failed"
