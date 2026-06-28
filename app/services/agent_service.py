@@ -1,5 +1,6 @@
 import os
 import uuid
+import json
 import asyncio
 from datetime import datetime, timezone
 from typing import Optional
@@ -72,7 +73,7 @@ def _build_tool_declarations(allowed_tools: list[str]) -> list[types.Tool]:
                     "tool_args": types.Schema(type=types.Type.STRING, description="툴에 전달하려는 인자 (JSON 문자열)"),
                     "reason": types.Schema(type=types.Type.STRING, description="확인이 필요한 이유"),
                 },
-                required=["tool_name", "reason"],
+                required=["tool_name", "tool_args", "reason"],
             ),
         )
     )
@@ -127,10 +128,15 @@ async def run_agent(
             if part.function_call:
                 fn = part.function_call
                 if fn.name == "request_confirmation":
+                    raw_tool_args = fn.args.get("tool_args", {})
+                    if isinstance(raw_tool_args, str):
+                        raw_tool_args = json.loads(raw_tool_args) if raw_tool_args else {}
+                    if not isinstance(raw_tool_args, dict):
+                        raw_tool_args = {}
                     event = ConfirmationEvent(
                         session_id=session_id,
                         tool_name=fn.args.get("tool_name", "unknown"),
-                        tool_args=dict(fn.args),
+                        tool_args=raw_tool_args,
                         reason=fn.args.get("reason", ""),
                     )
                     _sessions[session_id].status = "waiting_confirmation"
