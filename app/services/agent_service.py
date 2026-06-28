@@ -132,8 +132,10 @@ async def run_agent(
         )
 
         contents: list = [user_message]
+        max_turns = 10
+        turn = 0
 
-        while True:
+        while turn < max_turns:
             response = await client.aio.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=contents,
@@ -212,6 +214,11 @@ async def run_agent(
                 return
 
             contents.append(types.Content(role="user", parts=tool_responses))
+            turn += 1
+
+        _sessions[session_id].status = "failed"
+        _sessions[session_id].result = f"최대 턴 수({max_turns})를 초과해 세션을 종료했다."
+        await queue.put(None)
 
     except Exception as e:
         _sessions[session_id].status = "failed"
