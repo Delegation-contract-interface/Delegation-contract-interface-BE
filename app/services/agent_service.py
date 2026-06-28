@@ -159,7 +159,10 @@ async def run_agent(
                 if fn.name == "request_confirmation":
                     raw_tool_args = fn.args.get("tool_args", {})
                     if isinstance(raw_tool_args, str):
-                        raw_tool_args = json.loads(raw_tool_args) if raw_tool_args else {}
+                        try:
+                            raw_tool_args = json.loads(raw_tool_args) if raw_tool_args else {}
+                        except (json.JSONDecodeError, ValueError):
+                            raw_tool_args = {}
                     if not isinstance(raw_tool_args, dict):
                         raw_tool_args = {}
 
