@@ -11,6 +11,7 @@ def save_session(session: SessionResponse, user_message: str) -> None:
         "user_message": user_message,
         "status": session.status,
         "result": session.result,
+        "logs": [log.model_dump() for log in session.logs],
         "created_at": session.created_at.isoformat(),
     }).execute()
 

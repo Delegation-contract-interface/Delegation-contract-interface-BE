@@ -8,7 +8,7 @@ from typing import Optional
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-from app.models.session import ConfirmationEvent, SessionResponse
+from app.models.session import ConfirmationEvent, SessionLog, SessionResponse
 
 load_dotenv()
 
@@ -199,6 +199,13 @@ async def run_agent(
                     finally:
                         _confirm_futures.pop(session_id, None)
 
+                    _sessions[session_id].logs.append(SessionLog(
+                        type="confirmation",
+                        tool_name=fn.args.get("tool_name", "unknown"),
+                        reason=fn.args.get("reason", ""),
+                        approved=approved,
+                    ))
+
                     if not approved:
                         _sessions[session_id].status = "rejected"
                         _sessions[session_id].result = "운영자가 거절했다. 작업을 중단한다."
@@ -215,6 +222,12 @@ async def run_agent(
                 else:
                     tool_input = fn.args.get("input", "")
                     result = _execute_tool(fn.name, tool_input)
+                    _sessions[session_id].logs.append(SessionLog(
+                        type="tool_call",
+                        tool_name=fn.name,
+                        input=tool_input,
+                        result=result,
+                    ))
                     tool_responses.append(
                         types.Part.from_function_response(
                             name=fn.name,

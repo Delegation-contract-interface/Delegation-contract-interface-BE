@@ -19,9 +19,19 @@ class ConfirmRequest(BaseModel):
     approved: bool
 
 
+class SessionLog(BaseModel):
+    type: Literal["tool_call", "confirmation"]
+    tool_name: str
+    input: Optional[str] = None
+    result: Optional[str] = None
+    reason: Optional[str] = None
+    approved: Optional[bool] = None
+
+
 class SessionResponse(BaseModel):
     session_id: str
     contract_id: str
     status: Literal["running", "waiting_confirmation", "completed", "rejected", "failed"]
     result: Optional[str] = None
+    logs: list[SessionLog] = []
     created_at: datetime
