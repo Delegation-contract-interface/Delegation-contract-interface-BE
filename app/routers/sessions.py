@@ -4,10 +4,16 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
 from fastapi.responses import StreamingResponse
 from app.models.session import SessionCreate, ConfirmRequest, SessionResponse
-from app.services import agent_service, contract_service
+from app.services import agent_service, contract_service, session_service
 from app.dependencies import require_operator_key
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
+
+
+@router.get("", response_model=list[dict])
+def list_sessions():
+    """세션 히스토리 목록을 최신순으로 반환한다."""
+    return session_service.list_sessions()
 
 
 @router.post("", response_model=SessionResponse, status_code=201)
