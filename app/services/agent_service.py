@@ -2,6 +2,7 @@ import os
 import uuid
 import json
 import asyncio
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 from dotenv import load_dotenv
@@ -111,6 +112,20 @@ def init_session(session_id: str, contract_id: str) -> SessionResponse:
     return session
 
 
+async def _persist_session(session_id: str, user_message: str) -> None:
+    """세션 결과를 Supabase에 비동기로 저장한다."""
+    from app.services.session_service import save_session
+    import asyncio
+    session = _sessions.get(session_id)
+    if session:
+        try:
+            await asyncio.get_running_loop().run_in_executor(
+                None, save_session, session, user_message
+            )
+        except Exception:
+            logging.exception("Failed to persist session %s", session_id)
+
+
 async def run_agent(
     session_id: str,
     contract_id: str,
@@ -187,6 +202,7 @@ async def run_agent(
                     if not approved:
                         _sessions[session_id].status = "rejected"
                         _sessions[session_id].result = "운영자가 거절했다. 작업을 중단한다."
+                        await _persist_session(session_id, user_message)
                         await queue.put(None)
                         return
 
@@ -210,6 +226,7 @@ async def run_agent(
                 text_parts = [p.text for p in candidate.content.parts if hasattr(p, "text") and p.text]
                 _sessions[session_id].status = "completed"
                 _sessions[session_id].result = "\n".join(text_parts) if text_parts else "완료됐다."
+                await _persist_session(session_id, user_message)
                 await queue.put(None)
                 return
 
@@ -218,11 +235,13 @@ async def run_agent(
 
         _sessions[session_id].status = "failed"
         _sessions[session_id].result = f"최대 턴 수({max_turns})를 초과해 세션을 종료했다."
+        await _persist_session(session_id, user_message)
         await queue.put(None)
 
     except Exception as e:
         _sessions[session_id].status = "failed"
         _sessions[session_id].result = f"오류가 발생했다: {str(e)}"
+        await _persist_session(session_id, user_message)
         await queue.put(None)
 
 
