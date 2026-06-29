@@ -1,0 +1,63 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "ko-KR"
+tone_instructions: "시니어 백엔드 개발자처럼 리뷰하되 원인과 개선 방향을 중심으로 설명하세요. FastAPI, Python, Pydantic, 레이어 책임 분리, 비동기 처리, 보안, 성능, 회귀 위험을 우선 보고 한국어로 간결하게 작성하세요."
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  changed_files_summary: true
+  review_status: true
+  assess_linked_issues: false
+  related_prs: false
+  suggested_labels: true
+  suggested_reviewers: false
+  auto_assign_reviewers: false
+  sequence_diagrams: false
+  poem: false
+
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+    ignore_title_keywords:
+      - "[Docs]"
+    base_branches:
+      - "main"
+
+  path_filters:
+    - "!__pycache__/**"
+    - "!*.pyc"
+    - "!.venv/**"
+
+  path_instructions:
+    - path: "app/routers/**"
+      instructions: |
+        Router는 요청/응답 매핑과 의존성 주입만 담당해야 합니다.
+        비즈니스 로직이 Router에 직접 구현되어 있지 않은지 확인해주세요.
+        HTTP 상태코드가 적절한지, 응답 모델(response_model)이 명시되어 있는지 검토해주세요.
+
+    - path: "app/services/**"
+      instructions: |
+        Service는 비즈니스 로직의 핵심 계층입니다.
+        비동기 함수(async/await)가 올바르게 사용되고 있는지 확인해주세요.
+        asyncio.Future, asyncio.Queue 사용 시 누수(leak) 가능성이 없는지 검토해주세요.
+        외부 API(Gemini, Supabase) 호출 실패 시 예외 처리가 적절한지 확인해주세요.
+
+    - path: "app/models/**"
+      instructions: |
+        Pydantic 모델은 데이터 검증과 직렬화 역할만 해야 합니다.
+        필드 제약(min_length, max_length 등)이 적절히 적용되어 있는지 확인해주세요.
+        민감한 정보가 응답 모델에 포함되지 않는지 검토해주세요.
+
+    - path: "app/dependencies.py"
+      instructions: |
+        인증/인가 로직이 일관되게 적용되어 있는지 확인해주세요.
+        API 키 비교 시 타이밍 공격 방지(hmac.compare_digest)가 사용되고 있는지 검토해주세요.
+
+    - path: "*.yaml"
+      instructions: |
+        환경변수에 민감한 값이 하드코딩되어 있지 않은지 확인해주세요.
+        빌드/시작 커맨드가 운영 환경에 적합한지 검토해주세요.
+
+chat:
+  auto_reply: false
