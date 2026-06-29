@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import contracts, sessions
+from app.routers import contracts, sessions, stats
 
 app = FastAPI(title="Delegation Contract API")
 
@@ -18,6 +18,7 @@ app.add_middleware(
 
 app.include_router(contracts.router)
 app.include_router(sessions.router)
+app.include_router(stats.router)
 
 
 @app.get("/health")
