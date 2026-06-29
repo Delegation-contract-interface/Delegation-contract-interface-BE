@@ -2,6 +2,7 @@ import os
 import uuid
 import json
 import asyncio
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 from dotenv import load_dotenv
@@ -117,9 +118,12 @@ async def _persist_session(session_id: str, user_message: str) -> None:
     import asyncio
     session = _sessions.get(session_id)
     if session:
-        await asyncio.get_running_loop().run_in_executor(
-            None, save_session, session, user_message
-        )
+        try:
+            await asyncio.get_running_loop().run_in_executor(
+                None, save_session, session, user_message
+            )
+        except Exception:
+            logging.exception("Failed to persist session %s", session_id)
 
 
 async def run_agent(
